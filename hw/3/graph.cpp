@@ -4,34 +4,62 @@
 
 template <typename T> struct Vertex {
   T data;
-  std::forward_list<typename Tp><size_t> adjacency_list;
+  std::forward_list<size_t> adjacency_list;
 
   Vertex(const T& val) : data(val) {}
 };
 
 template <typename T> class Graph {
 public:
-  std::vector<Vertex<T>> vertices;
+  using edge_iterator = typename std::forward_list<size_t>::const_iterator;
+  using vertex_index = size_t;
 
-  size_t add_vertex(const T& val) {
+  vertex_index add_vertex(const T& val) {
     vertices.push_back(val);
     return vertices.size() - 1;
   }
 
-  T remove_vertex(size_t index) {
+  T remove_vertex(vertex_index index) {
     T return_value = vertices[index].data;
-    //std::swap(vertices[])
+    vertex_index replacement_index = vertices.size() - 1;
+
+    for (Vertex<T> &vertex : vertices) {
+      auto leader = vertex.adjacency_list.before_begin();
+      auto follower = leader++;
+
+      while (leader != vertex.adjacency_list.end()) {
+        if (*leader == index) {
+          ++leader;
+          vertex.adjacency_list.erase_after(follower);
+        } else {
+          if (*leader == replacement_index) {
+            *leader = index;
+          }
+
+          follower = leader++;
+        }
+      }
+    }
+
+    std::swap(vertices[index], vertices[replacement_index]);
+    vertices.pop_back();
+    return return_value;
   }
 
-
-
-  void add_edge(size_t from, size_t to) {
+  void add_edge(vertex_index from, vertex_index to) {
     vertices[from].adjacency_list.push_front(to);
     vertices[to].adjacency_list.push_front(from);
   }
 
-  void remove_edge(size_t from, size_t to) {
+  void remove_edge(vertex_index from, vertex_index to) {
     vertices[from].adjacency_list.remove(to);
     vertices[to].adjacency_list.remove(from);
   }
+
+  std::pair<edge_iterator, edge_iterator> out_edges(vertex_index vertex) {
+
+  }
+
+private:
+  std::vector<Vertex<T>> vertices;
 };
