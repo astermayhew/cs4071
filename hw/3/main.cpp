@@ -3,38 +3,53 @@
 #include <list>
 #include <iostream>
 #include <memory>
-#include <numeric>
 #include <optional>
 #include <ostream>
 #include <sstream>
 #include <vector>
 
-template <typename T, typename W> struct Edge;
+template <typename W> struct Edge;
 
 template <typename T, typename W> struct Vertex;
 
 template <typename T, typename W> class Graph;
 
-template <typename T, typename W> struct Edge {
+template <typename W> struct Edge {
   W weight;
   size_t from;
   size_t to;
 };
 
-template <typename T, typename W> struct EdgeIndex {
+template <typename W> struct EdgeIndex {
 private:
-  template <typename Tp, typename Wp> friend class Graph;
-  typedef typename std::list<Edge<T, W>>::iterator iterator;
+  template <typename T, typename Wp> friend class Graph;
+  typedef typename std::list<Edge<W>>::iterator iterator;
   iterator edge_iterator;
 
   EdgeIndex(iterator it) : edge_iterator(it) {}
+};
+
+template <typename W> class Edges {
+  using difference_type = ptrdiff_t;
+  using value_type = EdgeIndex<W>;
+
+  EdgeIndex<W> operator*() const = 0;
+  Edges& operator++() = 0;
+  Edges operator++()
+};
+
+template <typename W> class OutEdges {
+private:
+  std::list<Edge<W>> &adjacency_list;
+
+  OutEdges(std::list<Edge<W>> &list) : adjacency_list(list) {}
 };
 
 template <typename T, typename W> struct Vertex {
   Vertex(T value) : data(value) {}
 
   T data;
-  std::list<Edge<T, W>> adjacency_list;
+  std::list<Edge<W>> adjacency_list;
 
   bool operator==(const T& rhs) {
     return data == rhs;
@@ -54,7 +69,7 @@ private:
   std::vector<Vertex<T, W>> vertices;
 
 public:
-  typedef EdgeIndex<T, W> edge_index;
+  typedef EdgeIndex<W> edge_index;
   typedef VertexIndex vertex_index;
 
   std::optional<vertex_index> find_vertex(const T& value) {
@@ -73,7 +88,7 @@ public:
   }
 
   T& vertex_data(vertex_index vertex_index) {
-    return vertices[vertex_index].data;
+    return vertices[vertex_index.index].data;
   }
 
   T remove_vertex(vertex_index edge_index) {
@@ -105,11 +120,11 @@ public:
   }
 
   std::optional<edge_index> find_edge(const vertex_index from, const vertex_index to) {
-    auto edge_iterator = std::find_if(vertices[from].adjacency_list.begin(), vertices[from].adjacency_list.end(), [to](auto edge) {
+    auto edge_iterator = std::find_if(vertices[from.index].adjacency_list.begin(), vertices[from.index].adjacency_list.end(), [to](auto edge) {
       return edge.to == to;
     });
 
-    if (edge_iterator == vertices[from].end()) {
+    if (edge_iterator == vertices[from.index].end()) {
       return {};
     } else {
       return edge_index(edge_iterator);
@@ -117,8 +132,8 @@ public:
   }
 
   edge_index add_edge(const vertex_index from, const vertex_index to, W weight) {
-    vertices[from.index].adjacency_list.push_front(Edge<T, W>{weight, from.index, to.index});
-    return EdgeIndex<T, W>(vertices[from.index].adjacency_list.begin());
+    vertices[from.index].adjacency_list.push_front(Edge<W>{weight, from.index, to.index});
+    return edge_index(vertices[from.index].adjacency_list.begin());
   }
 
   W& edge_weight(edge_index edge_index) {
