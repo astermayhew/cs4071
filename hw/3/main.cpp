@@ -95,8 +95,8 @@ class Graph {
 
   bool has_edge(const size_t from, const size_t to) const {
     return std::find(vertices[from].adjacency_list.cbegin(),
-                        vertices[from].adjacency_list.cend(),
-                        to) != vertices[from].adjacency_list.cend();
+                     vertices[from].adjacency_list.cend(),
+                     to) != vertices[from].adjacency_list.cend();
   }
 
   std::pair<EdgeIterator, EdgeIterator> out_edges(
@@ -110,9 +110,8 @@ class Graph {
 };
 
 template <typename T>
-std::pair<std::vector<bool>, std::vector<size_t>> dfs(
-    const Graph<T>& graph,
-    const size_t start) {
+std::pair<std::vector<bool>, std::vector<size_t>> dfs(const Graph<T>& graph,
+                                                      const size_t start) {
   std::vector<bool> visited(graph.num_vertices());
   std::vector<size_t> order;
   std::stack<size_t> stack({start});
