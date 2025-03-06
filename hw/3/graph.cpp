@@ -4,10 +4,7 @@
 #include <forward_list>
 #include <iostream>
 #include <optional>
-#include <set>
 #include <stack>
-#include <string>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -71,7 +68,11 @@ public:
 
   size_t num_vertices() const { return vertices.size(); }
 
-  T& vertex_data(const VertexIndex index) const {
+  const T& vertex_data(const VertexIndex index) const {
+    return vertices[index].data;
+  }
+
+  T& vertex_data(const VertexIndex index) {
     return vertices[index].data;
   }
 
@@ -142,37 +143,35 @@ std::vector<std::vector<bool>> components(const Graph<int> &graph) {
 
 
 int main() {
+  using VertexIndex = typename astl::Graph<int>::VertexIndex;
   astl::Graph<int> graph;
 
-  int num_vertices = 0;
-  std::cin >> num_vertices;
+  int num_vertices = 5;
+  /*std::cin >> num_vertices;*/
   
+  std::vector<VertexIndex> vertex_indices(num_vertices);
   for (int i = 0; i < num_vertices; ++i) {
-    graph.add_vertex(i);
+    vertex_indices.push_back(graph.add_vertex(i));
   }
 
-  int 
+  /*int vertex1 = -1;*/
+  /*int vertex2 = 0;*/
+  /*std::cin >> vertex1;*/
+  /*while (vertex1 > -1) {*/
+  /*  std::cin >> vertex2;*/
+  /*  graph.add_edge(vertex_indices[vertex1], vertex_indices[vertex2]);*/
+  /*  std::cin >> vertex1;*/
+  /*}*/
+  graph.add_edge(vertex_indices[0], vertex_indices[1]);
 
-  if (argc < 2 || argc % 2 == 0) {
-    return 1;
+  auto vertex_range = graph.vertex_range();
+  for (VertexIndex i = vertex_range.first; i < vertex_range.second; ++i) {
+    std::cout << graph.vertex_data(i) << ": ";
+
+    auto edge_range = graph.out_edges(i);
+    for (auto it = edge_range.first; it != edge_range.second; ++it) {
+      std::cout << graph.vertex_data(*it) << ", ";
+    }
+    std::cout << '\n';
   }
-
-  int num_vertices = std::stoi(argv[1]);
-  std::vector<Graph<int>::vertex_index> vertex_indices;
-  for (int i = 0; i < num_vertices; ++i) {
-    vertex_indices.push_back(g.add_vertex(i));
-  }
-
-  for (int i = 2; strcmp(argv[i], "-1"); i += 2) {
-    g.add_edge(vertex_indices[std::stoi(argv[i])],
-               vertex_indices[std::stoi(argv[i + 1])], 1);
-  }
-
-  std::cout << g.to_string();
-
-  std::cout << '[';
-  for (auto v : dfs(g, vertex_indices[1])) {
-    std::cout << v << ',';
-  }
-  std::cout << "]\n";
 }
