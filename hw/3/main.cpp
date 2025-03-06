@@ -25,10 +25,9 @@ template <typename T>
 class Graph {
  public:
   using EdgeIterator = typename std::forward_list<size_t>::const_iterator;
-  using VertexIndex = size_t;
 
-  std::optional<VertexIndex> find_vertex(const T& val) const {
-    for (VertexIndex i = 0; i < num_vertices(); ++i) {
+  std::optional<size_t> find_vertex(const T& val) const {
+    for (size_t i = 0; i < num_vertices(); ++i) {
       if (vertex_data(i) == val) {
         return i;
       }
@@ -37,14 +36,14 @@ class Graph {
     return {};
   }
 
-  VertexIndex add_vertex(const T& val) {
+  size_t add_vertex(const T& val) {
     vertices.push_back(val);
     return vertices.size() - 1;
   }
 
-  T remove_vertex(const VertexIndex index) {
+  T remove_vertex(const size_t index) {
     const T return_value = vertices[index].data;
-    const VertexIndex replacement_index = vertices.size() - 1;
+    const size_t replacement_index = vertices.size() - 1;
 
     for (Vertex<T>& vertex : vertices) {
       auto leader = vertex.adjacency_list.before_begin();
@@ -71,34 +70,34 @@ class Graph {
 
   size_t num_vertices() const { return vertices.size(); }
 
-  const T& vertex_data(const VertexIndex index) const {
+  const T& vertex_data(const size_t index) const {
     return vertices[index].data;
   }
 
-  T& vertex_data(const VertexIndex index) { return vertices[index].data; }
+  T& vertex_data(const size_t index) { return vertices[index].data; }
 
-  std::pair<VertexIndex, VertexIndex> vertex_range() const {
-    return std::make_pair(0, vertices.size());
+  std::pair<size_t, size_t> vertex_range() const {
+    return std::make_pair(0, num_vertices());
   }
 
-  void add_edge(const VertexIndex from, const VertexIndex to) {
+  void add_edge(const size_t from, const size_t to) {
     vertices[from].adjacency_list.push_front(to);
     vertices[to].adjacency_list.push_front(from);
   }
 
-  void remove_edge(const VertexIndex from, const VertexIndex to) {
+  void remove_edge(const size_t from, const size_t to) {
     vertices[from].adjacency_list.remove(to);
     vertices[to].adjacency_list.remove(from);
   }
 
-  bool has_edge(const VertexIndex from, const VertexIndex to) const {
+  bool has_edge(const size_t from, const size_t to) const {
     return std::find_if(vertices[from].adjacency_list.cbegin(),
                         vertices[from].adjacency_list.cend(),
                         to) != vertices[from].adjacency_list.cend();
   }
 
   std::pair<EdgeIterator, EdgeIterator> out_edges(
-      const VertexIndex vertex_index) const {
+      const size_t vertex_index) const {
     return std::make_pair(vertices[vertex_index].adjacency_list.cbegin(),
                           vertices[vertex_index].adjacency_list.cend());
   }
@@ -108,19 +107,20 @@ class Graph {
 };
 
 template <typename T>
-std::vector<bool> dfs(const Graph<T>& graph,
-                      const typename Graph<T>::VertexIndex start) {
-  using VertexIndex = typename Graph<T>::VertexIndex;
-
+std::pair<std::vector<bool>, std::vector<size_t>> dfs(
+    const Graph<T>& graph,
+    const size_t start) {
   std::vector<bool> visited(graph.num_vertices());
-  std::stack<VertexIndex> stack({start});
+  std::vector<size_t> order;
+  std::stack<size_t> stack({start});
 
   while (!stack.empty()) {
-    VertexIndex index = stack.top();
+    size_t index = stack.top();
     stack.pop();
 
     if (!visited[index]) {
       visited[index] = true;
+      order.push_back(index);
 
       auto out_edges = graph.out_edges(index);
       for (auto it = out_edges.first; it != out_edges.second; ++it) {
@@ -129,7 +129,7 @@ std::vector<bool> dfs(const Graph<T>& graph,
     }
   }
 
-  return visited;
+  return std::make_pair(visited, order);
 }
 
 std::vector<std::vector<bool>> components(const Graph<int>& graph) {
@@ -141,7 +141,7 @@ std::vector<std::vector<bool>> components(const Graph<int>& graph) {
                      [i](std::vector<bool> component) {
                        return component[i];
                      }) == components.cend()) {
-      components.push_back(dfs(graph, i));
+      components.push_back(dfs(graph, i).first);
     }
   }
 
@@ -150,13 +150,12 @@ std::vector<std::vector<bool>> components(const Graph<int>& graph) {
 };  // namespace astl
 
 int main() {
-  using VertexIndex = typename astl::Graph<int>::VertexIndex;
   astl::Graph<int> graph;
 
   int num_vertices = 0;
   std::cin >> num_vertices;
 
-  std::vector<VertexIndex> vertex_indices;
+  std::vector<size_t> vertex_indices;
   vertex_indices.reserve(num_vertices);
   for (int i = 0; i < num_vertices; ++i) {
     vertex_indices.push_back(graph.add_vertex(i));
@@ -172,7 +171,7 @@ int main() {
   }
 
   auto vertex_range = graph.vertex_range();
-  for (VertexIndex i = vertex_range.first; i < vertex_range.second; ++i) {
+  for (size_t i = vertex_range.first; i < vertex_range.second; ++i) {
     std::cout << graph.vertex_data(i) << ": ";
 
     auto edge_range = graph.out_edges(i);
@@ -184,7 +183,7 @@ int main() {
 
   for (auto& component : astl::components(graph)) {
     std::cout << '{';
-    for (VertexIndex i = 0; i < component.size(); ++i) {
+    for (size_t i = 0; i < component.size(); ++i) {
       if (component[i]) {
         std::cout << graph.vertex_data(i) << ',';
       }
