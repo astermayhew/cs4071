@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <cstring>
 #include <forward_list>
+#include <iomanip>
 #include <iostream>
 #include <optional>
 #include <stack>
@@ -82,7 +83,9 @@ class Graph {
 
   void add_edge(const size_t from, const size_t to) {
     vertices[from].adjacency_list.push_front(to);
-    vertices[to].adjacency_list.push_front(from);
+    if (from != to) {
+      vertices[to].adjacency_list.push_front(from);
+    }
   }
 
   void remove_edge(const size_t from, const size_t to) {
@@ -91,7 +94,7 @@ class Graph {
   }
 
   bool has_edge(const size_t from, const size_t to) const {
-    return std::find_if(vertices[from].adjacency_list.cbegin(),
+    return std::find(vertices[from].adjacency_list.cbegin(),
                         vertices[from].adjacency_list.cend(),
                         to) != vertices[from].adjacency_list.cend();
   }
@@ -170,8 +173,7 @@ int main() {
     std::cin >> vertex1;
   }
 
-  auto vertex_range = graph.vertex_range();
-  for (size_t i = vertex_range.first; i < vertex_range.second; ++i) {
+  for (const auto i : vertex_indices) {
     std::cout << graph.vertex_data(i) << ": ";
 
     auto edge_range = graph.out_edges(i);
@@ -180,8 +182,23 @@ int main() {
     }
     std::cout << '\n';
   }
+  std::cout << '\n';
 
-  for (auto& component : astl::components(graph)) {
+  std::cout << std::setw(4) << ' ';
+  for (const auto i : vertex_indices) {
+    std::cout << std::setw(4) << graph.vertex_data(i);
+  }
+  std::cout << '\n';
+  for (const auto i : vertex_indices) {
+    std::cout << std::setw(4) << graph.vertex_data(i);
+    for (const auto j : vertex_indices) {
+      std::cout << std::setw(4) << (graph.has_edge(i, j) ? 'X' : '-');
+    }
+    std::cout << '\n';
+  }
+  std::cout << '\n';
+
+  for (const auto& component : astl::components(graph)) {
     std::cout << '{';
     for (size_t i = 0; i < component.size(); ++i) {
       if (component[i]) {
@@ -190,4 +207,5 @@ int main() {
     }
     std::cout << "}\n";
   }
+  std::cout << '\n';
 }
