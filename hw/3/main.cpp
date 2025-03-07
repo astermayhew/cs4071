@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <iostream>
 #include <optional>
+#include <ostream>
 #include <stack>
 #include <utility>
 #include <vector>
@@ -44,6 +45,7 @@ class Graph {
   // returns the index at which the vertex was inserted
   size_t add_vertex(const T& val) {
     vertices.push_back(val);
+    // inserted vertex will always be the last element of the vector
     return vertices.size() - 1;
   }
 
@@ -54,13 +56,19 @@ class Graph {
   // NOTE: indices pointing to the removed vertex and the last vertex are
   // invalidated
   T remove_vertex(const size_t index) {
+    // to avoid shifting all vertices over, we will replace the removed vertex
+    // with the last vertex in our vector
     const T return_value = vertices[index].data;
     const size_t replacement_index = vertices.size() - 1;
 
     for (Vertex<T>& vertex : vertices) {
       auto leader = vertex.adjacency_list.before_begin();
+      // we need to keep track of the node before the one we erase for a
+      // singly-linked list
       auto follower = leader++;
 
+      // we need to erase all edges pointing to the removed vertex and adjust
+      // all edges pointing to the replacement vertex
       while (leader != vertex.adjacency_list.end()) {
         if (*leader == index) {
           ++leader;
@@ -75,7 +83,9 @@ class Graph {
       }
     }
 
+    // swap old vertex with replacement vertex
     std::swap(vertices[index], vertices[replacement_index]);
+    // remove old vertex
     vertices.pop_back();
     return return_value;
   }
@@ -131,6 +141,11 @@ class Graph {
   std::vector<Vertex<T>> vertices;
 };
 
+// performs a depth-first search of `graph` starting at the vertex at `start`
+//
+// returns a pair containing a vector where for each index visited, that index
+// of the vector is true, and a vector containing the visited indices in the
+// order they were searched
 template <typename T>
 std::pair<std::vector<bool>, std::vector<size_t>> dfs(const Graph<T>& graph,
                                                       const size_t start) {
@@ -138,14 +153,18 @@ std::pair<std::vector<bool>, std::vector<size_t>> dfs(const Graph<T>& graph,
   std::vector<size_t> order;
   std::stack<size_t> stack({start});
 
+  // while there are vertices left to search,
   while (!stack.empty()) {
     size_t index = stack.top();
     stack.pop();
 
+    // if we haven't visited this vertex,
     if (!visited[index]) {
+      // visit it,
       visited[index] = true;
       order.push_back(index);
 
+      // and add its out edges to the stack
       auto out_edges = graph.out_edges(index);
       for (auto it = out_edges.first; it != out_edges.second; ++it) {
         stack.push(*it);
@@ -156,15 +175,23 @@ std::pair<std::vector<bool>, std::vector<size_t>> dfs(const Graph<T>& graph,
   return std::make_pair(visited, order);
 }
 
-std::vector<std::vector<bool>> components(const Graph<int>& graph) {
+// computes the connected components of `graph`
+//
+// returns a vector one vector for each connected component, where for each
+// vertex in that component, that vertex's index of that vector is true
+template <typename T>
+std::vector<std::vector<bool>> components(const Graph<T>& graph) {
   std::vector<std::vector<bool>> components;
 
-  auto vertex_range = graph.vertex_range();
-  for (auto i = vertex_range.first; i < vertex_range.second; ++i) {
+  auto [start_index, end_index] = graph.vertex_range();
+  // for each vertex,
+  for (size_t i = start_index; i < end_index; ++i) {
+    // if this vertex isn't contained in any components we've seen so far,
     if (std::find_if(components.cbegin(), components.cend(),
                      [i](std::vector<bool> component) {
                        return component[i];
                      }) == components.cend()) {
+      // collect the items in this component with dfs
       components.push_back(dfs(graph, i).first);
     }
   }
@@ -193,7 +220,10 @@ int main() {
     graph.add_edge(vertex_indices[vertex1], vertex_indices[vertex2]);
     std::cin >> vertex1;
   }
+  std::cout << '\n';
 
+  // print adjacency list
+  std::cout << "adjacency list:\n";
   for (const auto i : vertex_indices) {
     std::cout << graph.vertex_data(i) << ": ";
 
@@ -205,6 +235,8 @@ int main() {
   }
   std::cout << '\n';
 
+  // print adjacency matrix
+  std::cout << "adjacency matrix:\n";
   std::cout << std::setw(4) << ' ';
   for (const auto i : vertex_indices) {
     std::cout << std::setw(4) << graph.vertex_data(i);
@@ -219,6 +251,8 @@ int main() {
   }
   std::cout << '\n';
 
+  // print connected components
+  std::cout << "connected components:\n";
   for (const auto& component : astl::components(graph)) {
     std::cout << '{';
     for (size_t i = 0; i < component.size(); ++i) {
@@ -228,5 +262,4 @@ int main() {
     }
     std::cout << "}\n";
   }
-  std::cout << '\n';
 }
