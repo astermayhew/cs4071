@@ -10,6 +10,7 @@
 #include <vector>
 
 namespace astl {
+
 template <typename T>
 struct Vertex {
  private:
@@ -27,6 +28,7 @@ class Graph {
  public:
   using EdgeIterator = typename std::forward_list<size_t>::const_iterator;
 
+  // returns the index of the first vertex with data matching `val` if it exists
   std::optional<size_t> find_vertex(const T& val) const {
     for (size_t i = 0; i < num_vertices(); ++i) {
       if (vertex_data(i) == val) {
@@ -37,11 +39,20 @@ class Graph {
     return {};
   }
 
+  // adds vertex with data `val` to the graph
+  //
+  // returns the index at which the vertex was inserted
   size_t add_vertex(const T& val) {
     vertices.push_back(val);
     return vertices.size() - 1;
   }
 
+  // removes the vertex at index `index`
+  //
+  // returns the data associated with the removed vertex
+  //
+  // NOTE: indices pointing to the removed vertex and the last vertex are
+  // invalidated
   T remove_vertex(const size_t index) {
     const T return_value = vertices[index].data;
     const size_t replacement_index = vertices.size() - 1;
@@ -69,36 +80,47 @@ class Graph {
     return return_value;
   }
 
+  // returns the number of vertices in the graph
   size_t num_vertices() const { return vertices.size(); }
 
+  // returns a const reference to the data associated with the vertex at `index`
   const T& vertex_data(const size_t index) const {
     return vertices[index].data;
   }
 
+  // returns a reference to the data associated with the vertex at `index`
   T& vertex_data(const size_t index) { return vertices[index].data; }
 
+  // returns a pair containing the begin and (past-the-) end indices of the
+  // vertices in the graph
   std::pair<size_t, size_t> vertex_range() const {
     return std::make_pair(0, num_vertices());
   }
 
-  void add_edge(const size_t from, const size_t to) {
-    vertices[from].adjacency_list.push_front(to);
-    if (from != to) {
-      vertices[to].adjacency_list.push_front(from);
+  // adds an edge between the vertices at `from_index` and `to_index`
+  void add_edge(const size_t from_index, const size_t to_index) {
+    vertices[from_index].adjacency_list.push_front(to_index);
+    if (from_index != to_index) {
+      vertices[to_index].adjacency_list.push_front(from_index);
     }
   }
 
-  void remove_edge(const size_t from, const size_t to) {
-    vertices[from].adjacency_list.remove(to);
-    vertices[to].adjacency_list.remove(from);
+  // removes all edges between the vertices at `from_index` and `to_index`
+  void remove_edge(const size_t from_index, const size_t to_index) {
+    vertices[from_index].adjacency_list.remove(to_index);
+    vertices[to_index].adjacency_list.remove(from_index);
   }
 
-  bool has_edge(const size_t from, const size_t to) const {
-    return std::find(vertices[from].adjacency_list.cbegin(),
-                     vertices[from].adjacency_list.cend(),
-                     to) != vertices[from].adjacency_list.cend();
+  // returns a boolean indicating whether an edge between the vertices at
+  // `from_index` and `to_index` exists
+  bool has_edge(const size_t from_index, const size_t to_index) const {
+    return std::find(vertices[from_index].adjacency_list.cbegin(),
+                     vertices[from_index].adjacency_list.cend(),
+                     to_index) != vertices[from_index].adjacency_list.cend();
   }
 
+  // returns a pair containing begin and (past-the-) end forward iterators
+  // yielding the indices of the out edges of the vertex at `vertex_index`
   std::pair<EdgeIterator, EdgeIterator> out_edges(
       const size_t vertex_index) const {
     return std::make_pair(vertices[vertex_index].adjacency_list.cbegin(),
