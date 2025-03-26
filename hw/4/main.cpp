@@ -6,11 +6,16 @@
 #include <string>
 #include <vector>
 
+// returns a stable matching for preference lists `proposer_lists` and
+// `proposee_lists` via the gale-shapely algorithm.
+//
+// returns a vector of `size_t`s mapping proposee index to their matched
+// proposer's index.
 std::vector<size_t> stable_match(
     const std::vector<std::vector<size_t>>& proposer_lists,
     const std::vector<std::vector<size_t>>& proposee_lists) {
   std::vector<size_t> proposers_top_choices(proposer_lists.size());
-  std::vector<size_t> proposees_matches(proposer_lists.size(),
+  std::vector<size_t> proposees_matches(proposee_lists.size(),
                                         std::numeric_limits<size_t>::max());
 
   // create table mapping proposer index to proposee's ranking
@@ -59,6 +64,7 @@ int main() {
   std::string string_input;
   int num_input;
 
+  // get proposer names
   std::vector<std::string> proposers;
   std::cout << "enter proposer names separated by spaces:\n";
   std::getline(std::cin, string_input);
@@ -67,6 +73,7 @@ int main() {
     proposers.push_back(string_input);
   }
 
+  // get proposee names
   std::vector<std::string> proposees;
   std::cout << "enter proposee names separated by spaces:\n";
   std::getline(std::cin, string_input);
@@ -76,6 +83,11 @@ int main() {
     proposees.push_back(string_input);
   }
 
+  if (proposees.size() != proposers.size()) {
+    return 1;
+  }
+
+  // get proposer preference lists
   std::vector<std::vector<size_t>> proposer_prefs;
   for (const std::string& proposer : proposers) {
     std::vector<size_t> pref_list;
@@ -88,9 +100,14 @@ int main() {
       pref_list.push_back(num_input - 1);
     }
 
+    if (pref_list.size() != proposees.size()) {
+      return 1;
+    }
+
     proposer_prefs.push_back(pref_list);
   }
 
+  // get proposee preference lists
   std::vector<std::vector<size_t>> proposee_prefs;
   for (const std::string& proposee : proposees) {
     std::vector<size_t> pref_list;
@@ -103,10 +120,15 @@ int main() {
       pref_list.push_back(num_input - 1);
     }
 
+    if (pref_list.size() != proposers.size()) {
+      return 1;
+    }
+
     proposee_prefs.push_back(pref_list);
   }
   std::cout << '\n';
 
+  // print proposer preference lists
   std::cout << "proposers:\n";
   for (int i = 0; i < proposers.size(); ++i) {
     std::cout << '\t' << proposers[i] << ": ";
@@ -117,6 +139,7 @@ int main() {
   }
   std::cout << '\n';
 
+  // print proposee preference lists
   std::cout << "proposees:\n";
   for (int i = 0; i < proposees.size(); ++i) {
     std::cout << '\t' << proposees[i] << ": ";
@@ -127,6 +150,7 @@ int main() {
   }
   std::cout << '\n';
 
+  // print stable matching from gale-shapely
   std::vector<size_t> match = stable_match(proposer_prefs, proposee_prefs);
   for (int i = 0; i < match.size(); ++i) {
     std::cout << '(' << proposers[match[i]] << ", " << proposees[i] << ")\n";
