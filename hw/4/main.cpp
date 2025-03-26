@@ -42,8 +42,8 @@ std::vector<size_t> stable_match(
                                        [proposees_matches[target_proposee]] >
                proposees_preference_map[target_proposee][current_proposer]) {
       // proposee prefers proposer to old match, so proposee accepts
-      proposer_stack.back() = proposees_matches[target_proposee];
       // add old match back to proposer stack
+      proposer_stack.back() = proposees_matches[target_proposee];
       proposees_matches[target_proposee] = current_proposer;
 
     } else {
